@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# xcode proj
+*.DS_Store
+*.xcodeproj
+*.xcuserstate
+*.xcworkspacedata
+*.pbxproj
+
