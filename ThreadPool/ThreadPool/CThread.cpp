@@ -18,10 +18,22 @@ CThread::~CThread()
     
 }
 
-void CThread::start()
+bool CThread::start()
 {
     // 创建线程
     // 运行CWorker::run
+    if (0 != pthread_create(&m_tid, NULL, run, this))
+    {
+        return false;
+    }
+    return true;
+}
+
+void* CThread::run(void* args)
+{
+    CThread * pThread = (CThread *)args;
+    pThread->m_pWorker->run();
+    return 0;
 }
 
 void CThread::kill()

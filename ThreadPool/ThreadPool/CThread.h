@@ -27,7 +27,8 @@ public:
     /**
      create and start thread
      */
-    void start();
+    bool start();
+    static void* run(void* args);
     void kill();
     
     /**

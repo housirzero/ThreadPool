@@ -14,8 +14,7 @@ class CWorker
 public:
     CWorker(){};
     virtual ~CWorker(){};
-    
-private:
+
     virtual void run() = 0;
 };
 

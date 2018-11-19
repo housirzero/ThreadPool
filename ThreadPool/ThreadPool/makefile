@@ -8,4 +8,4 @@ CThread.o: CThread.cpp CThread.h CWorker.h
 	g++ -c CThread.cpp
 
 clean:
-	rm *.o
+	rm -rf *.o main
