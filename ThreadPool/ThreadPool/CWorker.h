@@ -12,7 +12,7 @@
 class CWorker
 {
 public:
-    CWorker(){};
+    CWorker() {};
     virtual ~CWorker(){};
 
     virtual void run() = 0;

@@ -1,11 +1,15 @@
-main: main.o CThread.o
-	g++ main.o CThread.o -o main
+CC = g++
+EXE = main
+SRCS = $(wildcard *.cpp)
+OBJS = $(patsubst %.cpp,%.o,${SRCS})
 
-main.o: main.cpp CThreadPool.h
-	g++ -c main.cpp
+RM = rm -rf
 
-CThread.o: CThread.cpp CThread.h CWorker.h
-	g++ -c CThread.cpp
+${EXE}: ${OBJS}
+	$(CC) -o ${EXE} ${OBJS}
+
+%.o: %.cpp
+	$(CC) -c $< -o $@
 
 clean:
-	rm -rf *.o main
+	@$(RM) -rf ${EXE} ${OBJS}

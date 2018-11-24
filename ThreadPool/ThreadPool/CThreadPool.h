@@ -16,13 +16,24 @@ using namespace std;
 class CThreadPool
 {
 public:
-    CThreadPool(){};
-    ~CThreadPool(){};
+    CThreadPool(__UINT32 dwThreadNum);
+    ~CThreadPool();
+    
+    CThread* getIdleThread();
+    __UINT32 getIdleThreadNum();
+    
+    bool assignWork(CWorker * pWorker);
+    void releaseWork();
+    
+    void lock();
+    void unlock();
     
 private:
-    __UINT32 m_dwThreadsNum;
-    list<CThread> m_listIdleThreads; // 空闲线程队列
-    list<CThread> m_listBusyThreads;
+    __UINT32 m_dwThreadNum;
+    __UINT32 m_dwIdleThreadNum;
+    list<CThread *> m_listIdleThreads; // 空闲线程队列
+    list<CThread *> m_listBusyThreads;
+    pthread_mutex_t m_pmutex; // 锁
 };
 
 #endif /* CThreadPool_h */

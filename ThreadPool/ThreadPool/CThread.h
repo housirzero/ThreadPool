@@ -11,24 +11,36 @@
 
 #include <pthread.h>
 #include "CWorker.h"
+#include "commondefine.h"
 
 enum enumThreadStatus
 {
-    THREAD_STATUS_IDLE = 0,
-    THREAD_STATUS_BUSY
+    THREAD_STATUS_IDLE,   // 未分配任务
+    THREAD_STATUS_START,  // 已分配任务，但未开始
+    THREAD_STATUS_BUSY,   // 正在运行任务
+    THREAD_STATUS_PAUSE   // 暂停
 };
 
+//封装一个互斥量和条件变量作为状态
+typedef struct condition
+{
+    pthread_mutex_t pmutex;
+    pthread_cond_t  pcond; // init = PTHREAD_COND_INITIALIZER
+}condition_t;
+
+class CThreadPool;
 class CThread
 {
 public:
-    CThread();
+    CThread(CThreadPool* parent);
     ~CThread();
     
     /**
-     create and start thread
+     create thread
      */
-    bool start();
-    static void* run(void* args);
+    bool create();
+    void run();
+    static void* stRun(void* args);
     void kill();
     
     /**
@@ -42,9 +54,9 @@ public:
 private:
     pthread_t        m_tid;  // thread id
     CWorker*         m_pWorker;
-    pthread_mutex_t  m_mutex;
     enumThreadStatus m_enumStatus;
-    pthread_cond_t   m_cond; // init = PTHREAD_COND_INITIALIZER;
+    condition_t      m_cond;
+    CThreadPool*     m_parent;
 };
 
 #endif /* CThread_h */
