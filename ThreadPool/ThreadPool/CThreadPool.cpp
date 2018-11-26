@@ -12,11 +12,11 @@
 
 CThreadPool::CThreadPool(__UINT32 dwThreadNum)
 {
-    m_dwThreadNum = dwThreadNum;
-    for(int i = 0; i < m_dwThreadNum; ++i)
+    for(__UINT32 i = 0; i < dwThreadNum; ++i)
     {
-        CThread* pThread = new CThread(this);
-        m_listIdleThreads.push_back(pThread);
+        CThread* pThread = new CThread(this, i);
+        m_vecAllThreads.push_back(pThread);
+        m_listIdleThreads.push_back(i);
     }
 }
 
@@ -28,19 +28,20 @@ CThreadPool::~CThreadPool()
         usleep(10000); // 10 ms
     }
     
-    list<CThread *>::iterator it = m_listIdleThreads.begin();
+    list<__UINT32>::iterator it = m_listIdleThreads.begin();
     for(; it != m_listIdleThreads.end(); ++it)
     {
-        delete *it;
+        CThread* pThread = m_vecAllThreads[*it];
+        delete pThread;
     }
     m_listIdleThreads.clear();
 }
 
-CThread* CThreadPool::getIdleThread()
+__UINT32 CThreadPool::getIdleThreadIndex()
 {
-    if(0 == m_dwIdleThreadNum)
+    if(m_listIdleThreads.empty())
     {
-        return NULL;
+        return -1;
     }
     return *(m_listIdleThreads.begin());
 }
@@ -55,6 +56,28 @@ void CThreadPool::unlock()
     pthread_mutex_unlock(&m_pmutex);
 }
 
+void CThreadPool::join()
+{
+    printf("start join ...\n");
+    __UINT32 dwThreadNum = m_vecAllThreads.size();
+    for(__UINT32 i = 0; i < dwThreadNum; ++i)
+    {
+        m_vecAllThreads[i]->join();
+    }
+}
+
+void CThreadPool::moveThreadFromIdleToBusy(__UINT32 dwIndex)
+{
+    m_listIdleThreads.remove(dwIndex);
+    m_listBusyThreads.push_front(dwIndex);
+}
+
+void CThreadPool::moveThreadFromBusyToIdle(__UINT32 dwIndex)
+{
+    m_listBusyThreads.remove(dwIndex);
+    m_listIdleThreads.push_front(dwIndex);
+}
+
 bool CThreadPool::assignWork(CWorker * pWorker)
 {
     bool ret = false;
@@ -64,21 +87,23 @@ bool CThreadPool::assignWork(CWorker * pWorker)
     if(m_listIdleThreads.size() > 0)
     {
         // get idle thread
-        list<CThread *>::iterator it = m_listIdleThreads.begin();
-        CThread* pThread = *it;
+        list<__UINT32>::iterator it = m_listIdleThreads.begin();
+        CThread* pThread = m_vecAllThreads[*it]; // *it is index
         
         // set worker
         if(pThread->setWorker(pWorker))
         {
-            // turn thread from idle to busy
-            // 需要看看下面两句那个删除效率高
-            m_listIdleThreads.erase(it);
-            //m_listIdleThreads.pop_front();
+            moveThreadFromIdleToBusy(*it);
             
-            m_listBusyThreads.push_front(pThread);
-            
-            // start run
-            pThread->resume();
+            if(pThread->isCreate())
+            {
+            	// start run
+            	pThread->resume();
+            }
+            else
+            {
+                pThread->create();
+            }
             ret = true;
         }
 

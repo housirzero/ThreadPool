@@ -9,6 +9,7 @@
 #ifndef CThreadPool_h
 #define CThreadPool_h
 #include <list>
+#include <vector>
 #include "commondefine.h"
 #include "CThread.h"
 using namespace std;
@@ -19,20 +20,23 @@ public:
     CThreadPool(__UINT32 dwThreadNum);
     ~CThreadPool();
     
-    CThread* getIdleThread();
+    __UINT32 getIdleThreadIndex();
     __UINT32 getIdleThreadNum();
     
     bool assignWork(CWorker * pWorker);
     void releaseWork();
     
+    void moveThreadFromIdleToBusy(__UINT32 dwIndex);
+    void moveThreadFromBusyToIdle(__UINT32 dwIndex);
+    
     void lock();
     void unlock();
+    void join();
     
 private:
-    __UINT32 m_dwThreadNum;
-    __UINT32 m_dwIdleThreadNum;
-    list<CThread *> m_listIdleThreads; // 空闲线程队列
-    list<CThread *> m_listBusyThreads;
+    vector<CThread *> m_vecAllThreads;
+    list<__UINT32> m_listIdleThreads; // 空闲线程队列
+    list<__UINT32> m_listBusyThreads;
     pthread_mutex_t m_pmutex; // 锁
 };
 
