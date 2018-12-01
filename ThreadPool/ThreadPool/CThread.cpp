@@ -107,6 +107,9 @@ void CThread::exit()
         printf("thread %u force exit.\n", m_dwIndex);
     	force_exit();
     }
+    //销毁互斥量和条件变量
+    pthread_mutex_destroy(&m_cond.pmutex);
+    pthread_cond_destroy(&m_cond.pcond);
 }
 
 void CThread::force_exit()

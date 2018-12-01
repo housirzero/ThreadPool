@@ -12,6 +12,11 @@
 
 CThreadPool::CThreadPool(__UINT32 dwThreadNum)
 {
+    if (pthread_mutex_init(&m_pmutex, NULL) != 0)
+    {
+        printf("mutex init error\n");
+    }
+
     for(__UINT32 i = 0; i < dwThreadNum; ++i)
     {
         CThread* pThread = new CThread(this, i);
@@ -35,6 +40,8 @@ CThreadPool::~CThreadPool()
         delete pThread;
     }
     m_listIdleThreads.clear();
+    
+    pthread_mutex_destroy(&m_pmutex);
 }
 
 __UINT32 CThreadPool::getIdleThreadIndex()
