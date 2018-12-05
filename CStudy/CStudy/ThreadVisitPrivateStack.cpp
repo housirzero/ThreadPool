@@ -25,13 +25,12 @@ void* thread1(void* args)
         printf("thread %d cond wait p become not NULL.\n", 1);
         pthread_cond_wait(&pcond, &pmutex);
     }
-    pthread_mutex_unlock(&pmutex);
+    //pthread_mutex_unlock(&pmutex);
     
     *p = 2;
     printf("thread %d, change *p = %d.\n", 1, *p);
-    
     // 通知thread2，*p已被修改
-    pthread_mutex_lock(&pmutex);
+    //pthread_mutex_lock(&pmutex);
     change = true;
     pthread_cond_signal(&pcond);
     pthread_mutex_unlock(&pmutex);
