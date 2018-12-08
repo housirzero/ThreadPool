@@ -8,10 +8,15 @@
 
 #include <iostream>
 #include "ThreadVisitPrivateStack.h"
+//#include "DesignPattern/Singleton.h"
+#include "Singleton.h"
 using namespace std;
 
 int main(int argc, const char * argv[]) {
     // insert code here...
-    test();
+    // test();
+    Singleton::test();
+
+    printf("hello world!\n");
     return 0;
 }
