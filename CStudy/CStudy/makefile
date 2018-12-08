@@ -9,6 +9,8 @@ RM = rm -rf
 ${EXE}: ${OBJS}
 	$(CC) -o ${EXE} ${OBJS}
 
+# “$<”表示所有的依赖目标集,也就是%.cpp
+# “$@”表示目标集,也就是%.o
 %.o: %.cpp
 	$(CC) -c ${INCLUDE_DIR} $< -o $@
 
