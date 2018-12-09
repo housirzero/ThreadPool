@@ -10,12 +10,14 @@
 #include "ThreadVisitPrivateStack.h"
 //#include "DesignPattern/Singleton.h"
 #include "Singleton.h"
+#include "WorkerFactory.h"
 using namespace std;
 
 int main(int argc, const char * argv[]) {
     // insert code here...
     // test();
-    Singleton::test();
+    // Singleton::test();
+    WorkerFactory::test();
 
     printf("hello world!\n");
     return 0;

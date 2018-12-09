@@ -1,8 +1,9 @@
 CC = g++
 EXE = cstudy
-SRCS = $(wildcard *.cpp ./DesignPattern/*.cpp)
+SRCS = $(wildcard *.cpp ./DesignPattern/*.cpp ./DesignPattern/factory/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,${SRCS})
-INCLUDE_DIR = -I./DesignPattern
+INCLUDE_DIR = -I./DesignPattern\
+	-I./DesignPattern/factory
 
 RM = rm -rf
 
