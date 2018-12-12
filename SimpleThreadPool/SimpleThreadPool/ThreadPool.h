@@ -22,8 +22,12 @@ public:
     // 开始运行线程
     void start();
     
+    // 从任务队列里获取任务
+    // 消费者
+    Worker* getWorker();
+    
     // 分配任务
-    bool assignWorker(Worker pWorker);
+    bool assignWorker(Worker* pWorker);
     
     // 等待所有任务运行结束
     void join();
@@ -32,7 +36,7 @@ public:
     void killall();
     
 private:
-    
+    static void* threadProc(void* argv);
 };
 
 #endif /* ThreadPool_h */

@@ -28,7 +28,8 @@ public:
     void start();
     
     // 添加任务
-    bool addWorker(Worker pWorker);
+    // 生产者
+    bool addWorker(Worker* pWorker);
     
     // 释放资源
     void release();
