@@ -11,13 +11,18 @@
 
 #include <stdio.h>
 #include "commondefine.h"
+#include <pthread.h>
 #include "Worker.h"
+#include <list>
 
+class ThreadPoolMng;
 class ThreadPool
 {
 public:
     ThreadPool(__UINT32 dwThreadPoolSize = MAX_THREAD_POOL_SIZE);
     ~ThreadPool();
+    
+    void registerMng(ThreadPoolMng* pMng);
     
     // 开始运行线程
     void start();
@@ -29,14 +34,28 @@ public:
     // 分配任务
     bool assignWorker(Worker* pWorker);
     
-    // 等待所有任务运行结束
+    // 设置退出标志，准备退出
+    void setExit() { m_bExit = true; };
+    
+    // 设置退出标志后，正在执行的任务不会被打断
+    // 所以这里需要等待所有任务运行结束
     void join();
     
     // 杀死所有线程，释放资源
     void killall();
     
 private:
-    static void* threadProc(void* argv);
+    static void* ThreadProc(void* argv);
+    bool         m_bExit; // 上层设置退出标志
+    
+    ThreadPoolMng* m_pMng;
+    __UINT32 m_dwThreadPoolSize;
+    
+    std::list<pthread_t*> m_lstIdleThreadId;
+    std::list<pthread_t*> m_lstBusyThreadId;
+    
+    pthread_t* m_pThreadTArray;
+    
 };
 
 #endif /* ThreadPool_h */

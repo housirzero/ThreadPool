@@ -12,8 +12,8 @@
 #include <stdio.h>
 #include "commondefine.h"
 #include "Worker.h"
-#include "ThreadPool.h"
 #include "WorkerQueue.h"
+#include "ThreadPool.h"
 
 class ThreadPoolMng
 {
@@ -24,12 +24,21 @@ public:
     // 初始化线程池和任务队列
     void init(__UINT32 dwThreadPoolSize = MAX_THREAD_POOL_SIZE, __UINT32 dwWorkerQueueSize = MAX_WORKER_QUEUE_SIZE);
     
+    ThreadPool* getThreadPool() {return m_pThreadPool;}
+    
+    WorkerQueue* getWorkerQueue() {return m_pWorkerQueue;}
+    
     // 系统开始运转
     void start();
     
     // 添加任务
     // 生产者
     bool addWorker(Worker* pWorker);
+    
+    bool getTopAndPop(Worker** ppWorker)
+    {
+        return m_pWorkerQueue->getTopAndPop(ppWorker);
+    }
     
     // 释放资源
     void release();

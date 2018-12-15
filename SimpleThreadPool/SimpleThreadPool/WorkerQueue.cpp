@@ -48,13 +48,46 @@ bool WorkerQueue::push(Worker *pWorker)
     return true;
 }
 
-bool WorkerQueue::pop(Worker *pWorker)
+/*
+ * 基本思路：
+ *     使用sem_trywait来判断信号量是否为0，在循环中通过休眠(usleep)进行等待
+ *     直到超时或者信号量大于0
+ * 存在问题：
+ *     休眠会使当前线程失去被处理器调度的资格，1）等休眠过后再次被处理器调度，可能已经超超时
+ *     2) 当有很多线程执行此操作时，可能有其它线程恰好得到sem的控制权，当前线程一直没等到，只能超时
+ * 还可以参考Keith Shortridge的实现：
+ *     https://github.com/housirzero/libxbee3/blob/master/xsys_darwin/sem_timedwait.c
+ */
+int WorkerQueue::sem_timedwait_macos(sem_t *sem, __UINT32 dwWaitTime)
+{
+    int ret = sem_trywait(sem);
+    __UINT32 dwAlreadyWaitTime = dwWaitTime;
+    // 等待时间小于SEM_WAIT_TIME_INTIVAL时，不再等待，直接返回
+    while(0 != ret && dwAlreadyWaitTime > SEM_WAIT_TIME_INTIVAL)
+    {
+        usleep(SEM_WAIT_TIME_INTIVAL);
+        dwAlreadyWaitTime -= SEM_WAIT_TIME_INTIVAL;
+        ret = sem_trywait(sem);
+    }
+    return ret;
+}
+
+bool WorkerQueue::getTopAndPop(Worker** ppWorker)
 {
     // 消耗资源
-    sem_wait(&m_tFull);
+    //sem_wait(&m_tFull);
+    // 使用超时机制，防止没有任务时一直等待，无法接收终止信号(整个进程需要终止时，push不需要考虑这种情况)
+    if (0 != sem_timedwait_macos(&m_tFull, DEFAULT_SEM_WAIT_TIME_OUT))
+    {
+        *ppWorker = NULL;
+        return false;
+    }
+    
     pthread_mutex_lock(&m_tMutex);
     
-    m_vecWorker[m_dwHeaderIndex++] = pWorker;
+    *ppWorker = m_vecWorker[m_dwHeaderIndex++]; // get
+    // pop
+    m_vecWorker[m_dwHeaderIndex++] = NULL; // 具体资源的释放由上层处理
     m_dwHeaderIndex = (m_dwHeaderIndex >= m_dwWorkerQueueSize) ? 0 : m_dwHeaderIndex;
     --m_dwCount;
     
