@@ -3,7 +3,7 @@ EXE = simpleTPDemo
 SRCS = $(wildcard *.cpp)
 OBJS = $(patsubst %.cpp,%.o,${SRCS})
 INCLUDE_DIR = -I./
-CFLAG = -Wno-deprecated-declarations
+CFLAG = #-Wno-deprecated-declarations
 
 RM = rm -rf
 

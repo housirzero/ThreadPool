@@ -21,6 +21,8 @@ public:
     ThreadPoolMng();
     ~ThreadPoolMng();
     
+    static ThreadPoolMng* getInstance();
+    
     // 初始化线程池和任务队列
     void init(__UINT32 dwThreadPoolSize = MAX_THREAD_POOL_SIZE, __UINT32 dwWorkerQueueSize = MAX_WORKER_QUEUE_SIZE);
     
@@ -40,6 +42,8 @@ public:
         return m_pWorkerQueue->getTopAndPop(ppWorker);
     }
     
+    void setExit() { m_pThreadPool->setExit(); }
+    
     // 释放资源
     void release();
     
@@ -49,7 +53,8 @@ public:
 protected:
     
 private:
-    static ThreadPoolMng* ms_pSelf;
+    //static ThreadPoolMng* ms_pSelf;
+    static ThreadPoolMng ms_self;
     ThreadPool*  m_pThreadPool;
     WorkerQueue* m_pWorkerQueue;
     

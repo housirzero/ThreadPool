@@ -40,7 +40,7 @@ public:
     // 记录的是地址，取出时已经返回，所以弹出不影响其他地方使用
     bool getTopAndPop(Worker** ppWorker);
     
-    bool isEmpty() { return 0 == m_dwCount; }
+    bool empty() { return 0 == m_dwCount; }
     
     // 获取当前队列中的任务数
     __UINT32 getCount() { return m_dwCount; }
@@ -49,8 +49,8 @@ protected:
     
 private:
     __UINT32 m_dwWorkerQueueSize; // 队列大小
-    sem_t    m_tFull;  // 队列已使用空间
-    sem_t    m_tEmpty; // 队列剩余空间
+    sem_t*    m_pSemFull;  // 队列已使用空间
+    sem_t*    m_pSemEmpty; // 队列剩余空间
     pthread_mutex_t m_tMutex; // 互斥，防止两个以上的对象同时操作队列
     
     std::vector<Worker*> m_vecWorker;

@@ -12,8 +12,8 @@
 class Worker
 {
 public:
-    Worker();
-    virtual ~Worker();
+    Worker(){};
+    virtual ~Worker() {};
     
     // 运行任务的接口
     virtual void run() = 0;

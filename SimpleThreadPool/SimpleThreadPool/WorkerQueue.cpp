@@ -14,28 +14,49 @@ WorkerQueue::WorkerQueue(__UINT32 dwWorkerQueueSize)
 ,m_dwTailIndex(0)
 ,m_dwCount(0)
 {
-    (void)sem_init(&m_tFull, 0, 0);
-    (void)sem_init(&m_tEmpty, 0, dwWorkerQueueSize);
+    // sem_init在mac中已经不被支持，创建总是失败
+    //(void)sem_init(&m_tFull, 0, 0);
+    //(void)sem_init(&m_tEmpty, 0, dwWorkerQueueSize);
+    m_pSemFull = sem_open("m_pSemFull",O_CREAT, S_IRUSR | S_IWUSR, 0);
+    if(NULL == m_pSemFull)
+    {
+        printf("sem_open m_pSemFull failed.\n");
+    }
+    m_pSemEmpty = sem_open("m_pSemEmpty",O_CREAT, S_IRUSR | S_IWUSR, dwWorkerQueueSize);
+    if(NULL == m_pSemEmpty)
+    {
+        printf("sem_open m_pSemEmpty failed.\n");
+    }
+
     // m_tMutex = PTHREAD_MUTEX_INITIALIZER; // 静态分配（延迟分配资源），不需要释放
     if (pthread_mutex_init(&m_tMutex, NULL) != 0) //动态分配，析构时需要释放资源
     {
         printf("mutex init error\n");
     }
     
-    m_vecWorker.reserve(dwWorkerQueueSize+1);
+    //m_vecWorker.reserve(dwWorkerQueueSize);
+    for(int i = 0 ; i < dwWorkerQueueSize; ++i)
+    {
+        m_vecWorker.push_back(NULL);
+    }
 }
 
-WorkerQueue::~WorkerQueue() 
+WorkerQueue::~WorkerQueue()
 {
     pthread_mutex_destroy(&m_tMutex);
-    sem_destroy(&m_tFull);
-    sem_destroy(&m_tEmpty);
+    // sem_destroy在mac中已经不被支持，创建总是失败
+    //sem_destroy(&m_tFull);
+    //sem_destroy(&m_tEmpty);
+    sem_close(m_pSemFull);
+    sem_unlink("m_pSemFull");
+    sem_close(m_pSemEmpty);
+    sem_unlink("m_pSemEmpty");
     m_vecWorker.clear(); // 实际Worker对象资源由任务创建者释放
 }
 
 bool WorkerQueue::push(Worker *pWorker)
 {
-    sem_wait(&m_tEmpty); // 消耗空闲位置资源
+    sem_wait(m_pSemEmpty); // 消耗空闲位置资源
     pthread_mutex_lock(&m_tMutex);
     
     m_vecWorker[m_dwTailIndex++] = pWorker;
@@ -44,7 +65,7 @@ bool WorkerQueue::push(Worker *pWorker)
     ++m_dwCount;
     
     pthread_mutex_unlock(&m_tMutex);
-    sem_post(&m_tFull);
+    sem_post(m_pSemFull);
     return true;
 }
 
@@ -77,7 +98,7 @@ bool WorkerQueue::getTopAndPop(Worker** ppWorker)
     // 消耗资源
     //sem_wait(&m_tFull);
     // 使用超时机制，防止没有任务时一直等待，无法接收终止信号(整个进程需要终止时，push不需要考虑这种情况)
-    if (0 != sem_timedwait_macos(&m_tFull, DEFAULT_SEM_WAIT_TIME_OUT))
+    if (0 != sem_timedwait_macos(m_pSemFull, DEFAULT_SEM_WAIT_TIME_OUT))
     {
         *ppWorker = NULL;
         return false;
@@ -85,14 +106,14 @@ bool WorkerQueue::getTopAndPop(Worker** ppWorker)
     
     pthread_mutex_lock(&m_tMutex);
     
-    *ppWorker = m_vecWorker[m_dwHeaderIndex++]; // get
+    *ppWorker = m_vecWorker[m_dwHeaderIndex]; // get
     // pop
     m_vecWorker[m_dwHeaderIndex++] = NULL; // 具体资源的释放由上层处理
     m_dwHeaderIndex = (m_dwHeaderIndex >= m_dwWorkerQueueSize) ? 0 : m_dwHeaderIndex;
     --m_dwCount;
     
     pthread_mutex_unlock(&m_tMutex);
-    sem_post(&m_tEmpty);
+    sem_post(m_pSemEmpty);
     return true;
 }
 

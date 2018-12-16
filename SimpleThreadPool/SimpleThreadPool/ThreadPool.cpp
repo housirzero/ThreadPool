@@ -15,12 +15,16 @@ ThreadPool::ThreadPool(__UINT32 dwThreadPoolSize)
 ,m_bExit(false)
 {
     m_pThreadTArray = new pthread_t[m_dwThreadPoolSize];
-    memset_s(m_pThreadTArray, sizeof(pthread_t)*m_dwThreadPoolSize, 0, sizeof(pthread_t)*m_dwThreadPoolSize);
+    for(int i = 0; i < m_dwThreadPoolSize; ++i)
+    {
+        m_pThreadTArray[i] = NULL;
+    }
 }
 
 ThreadPool::~ThreadPool()
 {
-    memset_s(m_pThreadTArray, sizeof(pthread_t)*m_dwThreadPoolSize, 0, sizeof(pthread_t)*m_dwThreadPoolSize);
+    delete[] m_pThreadTArray;
+    //m_pThreadTArray = NULL;
 }
 
 void ThreadPool::registerMng(ThreadPoolMng *pMng)
@@ -37,7 +41,6 @@ void ThreadPool::start()
             // create thread failed
             printf("create the %uth thread failed.\n", i+1);
         }
-        printf("create the %uth thread success.\n", i+1);
     }
 }
 
@@ -53,15 +56,32 @@ void* ThreadPool::ThreadProc(void *argv)
             return NULL;
         }
         Worker *pWorker = NULL;
-        pSelf->m_pMng->getTopAndPop(&pWorker);
+        bool bBusy = false;
         
         // run worker
         if(pSelf->m_pMng->getTopAndPop(&pWorker) && NULL != pWorker)
         {
+            printf("thread is working...\n");
             pWorker->run();
+            bBusy = true;
         }
-
-        // look if need exit
+        if(!bBusy)
+        {
+            printf("thread is idleing.\n");
+        }
     }
+    printf("thread exit.\n");
     return NULL;
 }
+
+void ThreadPool::join()
+{
+    for(__UINT32 i = 0; i < m_dwThreadPoolSize; ++i)
+    {
+        pthread_join(m_pThreadTArray[i], NULL);
+    }
+}
+
+
+
+
