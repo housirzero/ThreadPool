@@ -13,7 +13,13 @@ ThreadPool::ThreadPool(__UINT32 dwThreadPoolSize)
 :m_dwThreadPoolSize(dwThreadPoolSize)
 ,m_pMng(NULL)
 ,m_bExit(false)
+,m_dwBusyThreadNum(0)
 {
+    if (pthread_mutex_init(&m_tMutex, NULL) != 0) //动态分配，析构时需要释放资源
+    {
+        printf("mutex init error\n");
+    }
+
     m_pThreadTArray = new pthread_t[m_dwThreadPoolSize];
     for(int i = 0; i < m_dwThreadPoolSize; ++i)
     {
@@ -23,6 +29,7 @@ ThreadPool::ThreadPool(__UINT32 dwThreadPoolSize)
 
 ThreadPool::~ThreadPool()
 {
+    pthread_mutex_destroy(&m_tMutex);
     delete[] m_pThreadTArray;
     //m_pThreadTArray = NULL;
 }
@@ -42,6 +49,7 @@ void ThreadPool::start()
             printf("create the %uth thread failed.\n", i+1);
         }
     }
+    m_dwBusyThreadNum = 0;
 }
 
 void* ThreadPool::ThreadProc(void *argv)
@@ -56,18 +64,19 @@ void* ThreadPool::ThreadProc(void *argv)
             return NULL;
         }
         Worker *pWorker = NULL;
-        bool bBusy = false;
         
         // run worker
         if(pSelf->m_pMng->getTopAndPop(&pWorker) && NULL != pWorker)
         {
-            printf("thread is working...\n");
+            pthread_mutex_lock(&pSelf->m_tMutex);
+            ++pSelf->m_dwBusyThreadNum;
+            pthread_mutex_unlock(&pSelf->m_tMutex);
+            
             pWorker->run();
-            bBusy = true;
-        }
-        if(!bBusy)
-        {
-            printf("thread is idleing.\n");
+            
+            pthread_mutex_lock(&pSelf->m_tMutex);
+            --pSelf->m_dwBusyThreadNum;
+            pthread_mutex_unlock(&pSelf->m_tMutex);
         }
     }
     printf("thread exit.\n");

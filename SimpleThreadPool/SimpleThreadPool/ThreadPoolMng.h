@@ -42,6 +42,10 @@ public:
         return m_pWorkerQueue->getTopAndPop(ppWorker);
     }
     
+    __UINT32 getBusyThreadNum()
+    {
+        return m_pThreadPool->getBusyThreadNum();
+    }
     void setExit() { m_pThreadPool->setExit(); }
     
     // 释放资源

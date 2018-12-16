@@ -34,6 +34,11 @@ int main(int argc, const char * argv[]) {
     {
         usleep(1000000);
     }
+    for(int i = 0; i < 60; ++i)
+    {
+        printf("BusyThreadNum = %u.\n", pMng->getBusyThreadNum());
+        usleep(1000000);
+    }
     //usleep(60000000); // 观察线程没有任务时的状态
     // 设置退出标志，不影响正在运行的任务
     pMng->setExit();

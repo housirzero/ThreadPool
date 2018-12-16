@@ -34,6 +34,8 @@ public:
     // 分配任务
     bool assignWorker(Worker* pWorker);
     
+    __UINT32 getBusyThreadNum() { return m_dwBusyThreadNum; }
+    
     // 设置退出标志，准备退出
     void setExit() { m_bExit = true; };
     
@@ -50,6 +52,8 @@ private:
     
     ThreadPoolMng* m_pMng;
     __UINT32 m_dwThreadPoolSize;
+    __UINT32 m_dwBusyThreadNum; // 当前正在执行任务的线程（其他线程没有获取到任务，或者已经退出）
+    pthread_mutex_t m_tMutex; // 互斥，防止两个以上的线程同时修改m_dwBusyThreadNum
     
     std::list<pthread_t*> m_lstIdleThreadId;
     std::list<pthread_t*> m_lstBusyThreadId;
