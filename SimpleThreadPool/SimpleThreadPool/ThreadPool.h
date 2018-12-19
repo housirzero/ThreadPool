@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include "Worker.h"
 #include <list>
+#include <atomic>
 
 class ThreadPoolMng;
 class ThreadPool
@@ -48,12 +49,16 @@ public:
     
 private:
     static void* ThreadProc(void* argv);
-    bool         m_bExit; // 上层设置退出标志
     
     ThreadPoolMng* m_pMng;
-    __UINT32 m_dwThreadPoolSize;
+    __UINT32       m_dwThreadPoolSize;
+    bool           m_bExit; // 上层设置退出标志
+#ifdef USE_ATOMIC
+    std::atomic_int m_dwBusyThreadNum;
+#else
     __UINT32 m_dwBusyThreadNum; // 当前正在执行任务的线程（其他线程没有获取到任务，或者已经退出）
     pthread_mutex_t m_tMutex; // 互斥，防止两个以上的线程同时修改m_dwBusyThreadNum
+#endif
     
     std::list<pthread_t*> m_lstIdleThreadId;
     std::list<pthread_t*> m_lstBusyThreadId;

@@ -12,7 +12,7 @@
 #include <unistd.h>
 using namespace std;
 
-#define WORKER_NUM 48
+#define WORKER_NUM 100
 
 int main(int argc, const char * argv[]) {
     // insert code here...
@@ -25,7 +25,7 @@ int main(int argc, const char * argv[]) {
     Worker* pWorker[WORKER_NUM] = {NULL};
     for(int i = 0; i < WORKER_NUM; ++i)
     {
-        pWorker[i] = new MyWorker(i);
+        pWorker[i] = new MyWorker(i%20+20);
         pMng->addWorker(pWorker[i]);
     }
     
@@ -34,7 +34,7 @@ int main(int argc, const char * argv[]) {
     {
         usleep(1000000);
     }
-    for(int i = 0; i < 60; ++i)
+    for(int i = 0; i < 30; ++i)
     {
         printf("BusyThreadNum = %u.\n", pMng->getBusyThreadNum());
         usleep(1000000);

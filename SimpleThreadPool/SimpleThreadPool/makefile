@@ -3,7 +3,8 @@ EXE = simpleTPDemo
 SRCS = $(wildcard *.cpp)
 OBJS = $(patsubst %.cpp,%.o,${SRCS})
 INCLUDE_DIR = -I./
-CFLAG = #-Wno-deprecated-declarations
+MACRO = -DUSE_ATOMIC #是否使用C++11的原子操作
+CFLAG = $(MACRO) -Wall -std=c++11 #-Wno-deprecated-declarations
 
 RM = rm -rf
 

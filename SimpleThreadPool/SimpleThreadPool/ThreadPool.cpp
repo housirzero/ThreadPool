@@ -10,16 +10,18 @@
 #include "ThreadPoolMng.h"
 
 ThreadPool::ThreadPool(__UINT32 dwThreadPoolSize)
-:m_dwThreadPoolSize(dwThreadPoolSize)
-,m_pMng(NULL)
+:m_pMng(NULL)
+,m_dwThreadPoolSize(dwThreadPoolSize)
 ,m_bExit(false)
-,m_dwBusyThreadNum(0)
 {
+#ifndef USE_ATOMIC
     if (pthread_mutex_init(&m_tMutex, NULL) != 0) //动态分配，析构时需要释放资源
     {
         printf("mutex init error\n");
     }
-
+#endif
+    m_dwBusyThreadNum = 0;
+    
     m_pThreadTArray = new pthread_t[m_dwThreadPoolSize];
     for(int i = 0; i < m_dwThreadPoolSize; ++i)
     {
@@ -29,7 +31,9 @@ ThreadPool::ThreadPool(__UINT32 dwThreadPoolSize)
 
 ThreadPool::~ThreadPool()
 {
+#ifndef USE_ATOMIC
     pthread_mutex_destroy(&m_tMutex);
+#endif
     delete[] m_pThreadTArray;
     //m_pThreadTArray = NULL;
 }
@@ -68,15 +72,24 @@ void* ThreadPool::ThreadProc(void *argv)
         // run worker
         if(pSelf->m_pMng->getTopAndPop(&pWorker) && NULL != pWorker)
         {
+#ifdef USE_ATOMIC
+            ++pSelf->m_dwBusyThreadNum;
+#else
             pthread_mutex_lock(&pSelf->m_tMutex);
             ++pSelf->m_dwBusyThreadNum;
             pthread_mutex_unlock(&pSelf->m_tMutex);
+#endif
             
             pWorker->run();
             
+#ifdef USE_ATOMIC
+            --pSelf->m_dwBusyThreadNum;
+#else
+
             pthread_mutex_lock(&pSelf->m_tMutex);
             --pSelf->m_dwBusyThreadNum;
             pthread_mutex_unlock(&pSelf->m_tMutex);
+#endif
         }
     }
     printf("thread exit.\n");
