@@ -7,6 +7,7 @@
 //
 
 #include "WorkerQueue.h"
+#include "SupportTool.h"
 
 WorkerQueue::WorkerQueue(__UINT32 dwWorkerQueueSize)
 :m_dwWorkerQueueSize(dwWorkerQueueSize)
@@ -78,16 +79,19 @@ bool WorkerQueue::push(Worker *pWorker)
  *     2) 当有很多线程执行此操作时，可能有其它线程恰好得到sem的控制权，当前线程一直没等到，只能超时
  * 还可以参考Keith Shortridge的实现：
  *     https://github.com/housirzero/libxbee3/blob/master/xsys_darwin/sem_timedwait.c
+ *
+ * 20190103 修改: 使用select代替usleep进行等待
  */
 int WorkerQueue::sem_timedwait_macos(sem_t *sem, __UINT32 dwWaitTime)
 {
     int ret = sem_trywait(sem);
     __UINT32 dwAlreadyWaitTime = dwWaitTime;
     // 等待时间小于SEM_WAIT_TIME_INTIVAL时，不再等待，直接返回
-    while(0 != ret && dwAlreadyWaitTime > SEM_WAIT_TIME_INTIVAL)
+    while(0 != ret && dwAlreadyWaitTime > SEM_WAIT_MILLI_SECOND_TIME_INTIVAL)
     {
-        usleep(SEM_WAIT_TIME_INTIVAL);
-        dwAlreadyWaitTime -= SEM_WAIT_TIME_INTIVAL;
+        // usleep(SEM_WAIT_MILLI_SECOND_TIME_INTIVAL * 1000);
+        SupportTool::idle(SEM_WAIT_MILLI_SECOND_TIME_INTIVAL);
+        dwAlreadyWaitTime -= SEM_WAIT_MILLI_SECOND_TIME_INTIVAL;
         ret = sem_trywait(sem);
     }
     return ret;
@@ -98,7 +102,7 @@ bool WorkerQueue::getTopAndPop(Worker** ppWorker)
     // 消耗资源
     //sem_wait(&m_tFull);
     // 使用超时机制，防止没有任务时一直等待，无法接收终止信号(整个进程需要终止时，push不需要考虑这种情况)
-    if (0 != sem_timedwait_macos(m_pSemFull, DEFAULT_SEM_WAIT_TIME_OUT))
+    if (0 != sem_timedwait_macos(m_pSemFull, DEFAULT_SEM_WAIT_MILLI_SECOND_TIME_OUT))
     {
         *ppWorker = NULL;
         return false;

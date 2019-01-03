@@ -17,10 +17,10 @@
 #include <unistd.h>
 #include "Worker.h"
 
-// 每次try_wait后的等待时间间隔(0.1s)，微秒
-#define SEM_WAIT_TIME_INTIVAL 100000
+// 每次try_wait后的等待时间间隔(0.1s)，毫秒
+#define SEM_WAIT_MILLI_SECOND_TIME_INTIVAL 100
 // sem_timedwait_macos 等待的默认时间(1s)，毫秒
-#define DEFAULT_SEM_WAIT_TIME_OUT 1000000
+#define DEFAULT_SEM_WAIT_MILLI_SECOND_TIME_OUT 1000
 
 class WorkerQueue
 {
